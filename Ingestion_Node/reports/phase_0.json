@@ -1,0 +1,15 @@
+{
+  "phase": 0,
+  "rows_read": 1040,
+  "malformed": 20,
+  "missing_fields": 0,
+  "bad_op": 0,
+  "duplicates_dropped": 20,
+  "accepted": 1000,
+  "dangling_links_fixed": 0,
+  "prev_snapshot": null,
+  "new_snapshot": "8521659613311335524",
+  "added": 1000,
+  "deleted": 0,
+  "updated": 0
+}

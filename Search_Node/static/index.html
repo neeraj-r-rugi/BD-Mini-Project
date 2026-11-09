@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini Search</title>
+  <style>
+    body { font: 16px system-ui, sans-serif; max-width: 1000px; margin: 3rem auto; padding: 0 1rem; }
+    form { display: flex; gap: .5rem; } input { flex: 1; padding: .6rem; }
+    button { padding: .6rem 1rem; } table { width: 100%; margin-top: 1.5rem; border-collapse: collapse; }
+    th, td { padding: .5rem; border-bottom: 1px solid #ddd; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Mini Search</h1>
+  <small id="version"></small>
+  <form id="form"><input id="q" required aria-label="Search"><button>Search</button></form>
+  <table id="results"><thead><tr><th>#</th><th>Title</th><th>Doc ID</th><th>URL</th><th>Score</th></tr></thead><tbody></tbody></table>
+  <p id="msg"></p>
+  <script>
+    const version = document.getElementById('version'), body = document.querySelector('#results tbody'), msg = document.getElementById('msg');
+    const text = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function loadVersion() {
+      const response = await fetch('/version');
+      if (!response.ok) { version.textContent = 'index not loaded'; return; }
+      const data = await response.json(); version.textContent = `index v${data.version} · ${Number(data.manifest.n_docs).toLocaleString()} docs`;
+    }
+    async function doSearch() {
+      const q = document.getElementById('q').value.trim(); if (!q) return;
+      msg.textContent = ''; body.replaceChildren();
+      const response = await fetch('/search?q=' + encodeURIComponent(q));
+      if (!response.ok) { msg.textContent = response.status === 503 ? 'index not loaded' : 'search failed'; return; }
+      const data = await response.json();
+      if (!data.results.length) { msg.textContent = 'No results'; return; }
+      body.innerHTML = data.results.map(r => `<tr><td>${r.rank}</td><td>${text(r.title)}</td><td>${text(r.doc_id)}</td><td><a href="${text(r.url)}">${text(r.url)}</a></td><td>${Number(r.score).toFixed(4)}</td></tr>`).join('');
+    }
+    document.getElementById('form').addEventListener('submit', event => { event.preventDefault(); doSearch(); });
+    loadVersion();
+  </script>
+</body>
+</html>
