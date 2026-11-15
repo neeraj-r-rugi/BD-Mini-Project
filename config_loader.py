@@ -54,7 +54,7 @@ def build_spark(app: str, node: int):
     spark = (
         SparkSession.builder.appName(app)
         .master(CFG["SPARK_MASTER_URL"])
-        .config("spark.driver.host", CFG[f"NODE{node}_HOST"])
+        .config("spark.driver.host", os.environ.get("SPARK_LOCAL_IP") or CFG[f"NODE{node}_HOST"])
         .config("spark.driver.bindAddress", "0.0.0.0")
         .config("spark.driver.port", CFG["SPARK_DRIVER_PORT"])
         .config("spark.blockManager.port", CFG["SPARK_BLOCKMANAGER_PORT"])
