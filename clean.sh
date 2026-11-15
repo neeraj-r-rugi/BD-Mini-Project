@@ -26,12 +26,20 @@ echo "  Local reports: $REPORTS"
 echo "  Local staging: $STAGING"
 echo "  Local serving: $SERVING"
 
+HDFS_CLEANED=false
 if ! command -v hdfs >/dev/null 2>&1; then
-  echo "error: hdfs command not found; HDFS state was not removed" >&2
-  exit 1
+  echo "warning: hdfs command not found; HDFS state was not removed" >&2
+else
+  HDFS_HOST="${HDFS_URI#*://}"
+  HDFS_HOST="${HDFS_HOST%%[:/]*}"
+  if ! getent hosts "$HDFS_HOST" >/dev/null 2>&1; then
+    echo "warning: HDFS host '$HDFS_HOST' could not be resolved; HDFS state was not removed" >&2
+  elif hdfs dfs -rm -r -f "$HDFS_ROOT" >/dev/null 2>&1; then
+    HDFS_CLEANED=true
+  else
+    echo "warning: could not remove HDFS state; continuing with local cleanup" >&2
+  fi
 fi
-
-hdfs dfs -rm -r -f "$HDFS_ROOT"
 
 rm -rf \
   "$REPORTS" \
@@ -48,5 +56,8 @@ rm -rf \
 mkdir -p "$REPORTS" "$STAGING" "$SERVING"
 
 echo "Clean complete."
+if [[ "$HDFS_CLEANED" != true ]]; then
+  echo "Warning: local state was cleaned, but HDFS state remains at $HDFS_ROOT." >&2
+fi
 echo "Preserved: .config, source files, documentation, .venv, and Ingestion_Node/data/*.jsonl"
 echo "Restart the search service before using it again if it was running during cleanup."
